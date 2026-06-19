@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Personas que dependen de otra región para radioterapia</title>
+  <style>
+    :root { --bg:#f6f4f1; --card:#ffffff; --ink:#1c2430; --muted:#5f6b7a; --line:#e3ded8; --local:#147d74; --local-soft:#dcefeb; --depend:#c43d32; --depend-soft:#f6dfdc; --accent:#23395b; --shadow:0 18px 42px rgba(28,36,48,.12); }
+    * { box-sizing: border-box; }
+    body { margin:0; background:transparent; font-family: Manrope, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink); }
+    .rt-wrap { max-width:1120px; margin:0 auto; padding:clamp(18px,3vw,36px); background:var(--bg); border-radius:28px; }
+    .eyebrow { color:var(--depend); font-weight:800; letter-spacing:.08em; text-transform:uppercase; font-size:12px; margin:0 0 10px; }
+    h2 { margin:0; font-size:clamp(28px,4vw,48px); line-height:1.04; letter-spacing:-.045em; max-width:900px; }
+    .lead { max-width:820px; margin:16px 0 24px; color:var(--muted); font-size:clamp(16px,2vw,20px); line-height:1.45; }
+    .summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:24px 0; }
+    .stat { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px; box-shadow:0 8px 24px rgba(28,36,48,.06); }
+    .stat .num { display:block; font-size:clamp(30px,5vw,54px); line-height:1; font-weight:900; letter-spacing:-.06em; }
+    .stat .label { display:block; margin-top:8px; color:var(--muted); font-size:15px; }
+    .stat.depend .num { color:var(--depend); } .stat.local .num { color:var(--local); }
+    .controls { display:flex; gap:10px; flex-wrap:wrap; margin:12px 0 18px; }
+    button.filter { border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:999px; padding:9px 14px; font:inherit; font-size:14px; cursor:pointer; transition:transform .12s ease, background .12s ease, border .12s ease; }
+    button.filter:hover { transform:translateY(-1px); } button.filter.active { border-color:var(--accent); background:var(--accent); color:white; }
+    .viz-card { background:var(--card); border:1px solid var(--line); border-radius:22px; padding:clamp(14px,2.4vw,24px); box-shadow:var(--shadow); position:relative; }
+    .legend { display:flex; gap:18px; flex-wrap:wrap; align-items:center; color:var(--muted); font-size:14px; margin-bottom:16px; }
+    .legend-item { display:flex; align-items:center; gap:8px; } .dot-sample { width:13px; height:13px; border-radius:50%; display:inline-block; } .dot-sample.local { background:var(--local); } .dot-sample.depend { background:var(--depend); }
+    .circle-grid { display:flex; flex-wrap:wrap; gap:7px; align-items:center; align-content:flex-start; min-height:190px; padding:4px 0; }
+    .person-dot { width:clamp(13px,1.9vw,18px); height:clamp(13px,1.9vw,18px); border-radius:50%; border:0; cursor:pointer; opacity:.93; transition:transform .12s ease, opacity .12s ease, box-shadow .12s ease; position:relative; }
+    .person-dot.acceso.local, .person-dot.local { background:var(--local); } .person-dot.dependencia { background:var(--depend); } .person-dot.dim { opacity:.12; }
+    .person-dot:hover, .person-dot.active { transform:scale(1.45); opacity:1; box-shadow:0 0 0 5px rgba(35,57,91,.12); z-index:2; }
+    .detail { margin-top:20px; display:grid; grid-template-columns:1fr 1.1fr; gap:18px; }
+    .panel { border-radius:18px; border:1px solid var(--line); background:#fbfaf8; padding:18px; min-height:155px; }
+    .panel h3 { margin:0 0 8px; font-size:24px; letter-spacing:-.03em; } .panel p { margin:6px 0; color:var(--muted); line-height:1.4; }
+    .pill { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-size:13px; font-weight:800; margin-bottom:10px; }
+    .pill.local { background:var(--local-soft); color:var(--local); } .pill.dependencia { background:var(--depend-soft); color:var(--depend); }
+    .route-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .route { text-align:left; border:1px solid var(--line); background:white; border-radius:14px; padding:12px; cursor:pointer; transition:border .12s ease, transform .12s ease; font:inherit; }
+    .route:hover { border-color:var(--depend); transform:translateY(-1px); } .route strong { display:block; font-size:15px; } .route span { display:block; color:var(--muted); font-size:13px; margin-top:3px; }
+    .note { margin:14px 2px 0; color:var(--muted); font-size:12px; line-height:1.45; }
+    .tooltip { position:fixed; pointer-events:none; background:rgba(28,36,48,.96); color:white; padding:10px 12px; border-radius:12px; font-size:13px; line-height:1.35; box-shadow:0 10px 25px rgba(0,0,0,.22); max-width:250px; z-index:50; opacity:0; transform:translate(-9999px,-9999px); transition:opacity .08s ease; }
+    .tooltip b { display:block; margin-bottom:2px; }
+    @media (max-width:760px) { .rt-wrap { border-radius:0; padding:18px; } .summary,.detail { grid-template-columns:1fr; } .route-list { grid-template-columns:1fr; } .circle-grid { gap:6px; } }
+  </style>
+</head>
+<body>
+  <section class="rt-wrap" aria-labelledby="rt-title">
+    <p class="eyebrow">Acceso territorial a radioterapia</p>
+    <h2 id="rt-title">Más de 4,2 millones de personas viven en regiones sin aceleradores lineales</h2>
+    <p class="lead">Cada círculo representa aproximadamente 100 mil habitantes. En rojo aparecen las personas que viven en regiones donde, según los datos disponibles, no hay aceleradores lineales para radioterapia.</p>
+    <div class="summary" aria-label="Resumen de población según acceso regional">
+      <div class="stat depend"><span class="num" id="depNum">4,24 millones</span><span class="label">personas dependen de otra región para acceder a radioterapia.</span></div>
+      <div class="stat local"><span class="num" id="localNum">14,24 millones</span><span class="label">personas viven en regiones con aceleradores lineales.</span></div>
+    </div>
+    <div class="controls" aria-label="Filtros de visualización">
+      <button class="filter active" data-filter="todos">Ver todas</button><button class="filter" data-filter="dependencia">Solo regiones sin aceleradores</button><button class="filter" data-filter="acceso local">Solo regiones con acceso local</button>
+    </div>
+    <div class="viz-card">
+      <div class="legend"><span class="legend-item"><span class="dot-sample depend"></span> Dependen de otra región</span><span class="legend-item"><span class="dot-sample local"></span> Acceso en su región</span><span class="legend-item">● = ~100.000 habitantes</span></div>
+      <div class="circle-grid" id="circleGrid" role="img" aria-label="Círculos proporcionales a la población regional, coloreados según acceso local a radioterapia"></div>
+      <div class="detail"><article class="panel" id="detailPanel" aria-live="polite"><span class="pill dependencia">Selecciona un círculo rojo</span><h3>Regiones que derivan pacientes</h3><p>Pasa el mouse o toca un círculo para ver la región, población, centro de derivación y distancia aproximada.</p></article><aside class="panel"><h3>Rutas de derivación</h3><div class="route-list" id="routeList"></div></aside></div>
+    </div>
+    <p class="note">Fuente: población Censo 2024 (INE); centros y equipos según Listado de Establecimientos de Radioterapia 2026 (ISP), de acuerdo con la base entregada. Las distancias son aproximadas y editables dentro del archivo HTML.</p>
+  </section>
+  <div class="tooltip" id="tooltip"></div>
+  <script>
+    const DATA = [
+      {
+            "iso": "CL-AP",
+            "region": "Arica y Parinacota",
+            "poblacion": 244569,
+            "centros": 0,
+            "aceleradores": 0,
+            "estado": "dependencia",
+            "derivacion": "Antofagasta",
+            "distancia_km": 575,
+            "ruta": "Arica → Antofagasta",
+            "circulos": 2
+      },
+      {
+            "iso": "CL-TA",
+            "region": "Tarapacá",
+            "poblacion": 369806,
+            "centros": 0,
+            "aceleradores": 0,
+            "estado": "dependencia",
+            "derivacion": "Antofagasta",
+            "distancia_km": 380,
+            "ruta": "Iquique → Antofagasta",
+            "circulos": 4
+      },
+      {
+            "iso": "CL-AN",
+            "region": "Antofagasta",
+            "poblacion": 635416,
+            "centros": 1,
+            "aceleradores": 2,
+            "estado": "acceso local",
+            "derivacion": "Acceso en la región",
+            "distancia_km": 0,
+            "ruta": "",
+            "circulos": 6
+      },
+      {
+            "iso": "CL-AT",
+            "region": "Atacama",
+            "poblacion": 299180,
+            "centros": 0,
+            "aceleradores": 0,
+            "estado": "dependencia",
+            "derivacion": "Antofagasta",
+            "distancia_km": 565,
+            "ruta": "Copiapó → Antofagasta",
+            "circulos": 3
+      },
+      {
+            "iso": "CL-CO",
+            "region": "Coquimbo",
+            "poblacion": 832864,
+            "centros": 0,
+            "aceleradores": 0,
+            "estado": "dependencia",
+            "derivacion": "Valparaíso",
+            "distancia_km": 350,
+            "ruta": "La Serena → Valparaíso",
+            "circulos": 8
+      },
+      {
+            "iso": "CL-VS",
+            "region": "Valparaíso",
+            "poblacion": 1896053,
+            "centros": 3,
+            "aceleradores": 4,
+            "estado": "acceso local",
+            "derivacion": "Acceso en la región",
+            "distancia_km": 0,
+            "ruta": "",
+            "circulos": 19
+      },
+      {
+            "iso": "CL-RM",
+            "region": "Metropolitana",
+            "poblacion": 7400741,
+            "centros": 15,
+            "aceleradores": 29,
+            "estado": "acceso local",
+            "derivacion": "Acceso en la región",
+            "distancia_km": 0,
+            "ruta": "",
+            "circulos": 74
+      },
+      {
+            "iso": "CL-LI",
+            "region": "O'Higgins",
+            "poblacion": 987228,
+            "centros": 0,
+            "aceleradores": 0,
+            "estado": "dependencia",
+            "derivacion": "Metropolitana",
+            "distancia_km": 90,
+            "ruta": "Rancagua → Santiago",
+            "circulos": 10
+      },
+      {
+            "iso": "CL-ML",
+            "region": "Maule",
+            "poblacion": 1123008,
+            "centros": 1,
+            "aceleradores": 2,
+            "estado": "acceso local",
+            "derivacion": "Acceso en la región",
+            "distancia_km": 0,
+            "ruta": "",
+            "circulos": 11
+      },
+      {
+            "iso": "CL-NB",
+            "region": "Ñuble",
+            "poblacion": 512289,
+            "centros": 0,
+            "aceleradores": 0,
+            "estado": "dependencia",
+            "derivacion": "Biobío",
+            "distancia_km": 85,
+            "ruta": "Chillán → Concepción",
+            "circulos": 5
+      },
+      {
+            "iso": "CL-BI",
+            "region": "Biobío",
+            "poblacion": 1613059,
+            "centros": 4,
+            "aceleradores": 6,
+            "estado": "acceso local",
+            "derivacion": "Acceso en la región",
+            "distancia_km": 0,
+            "ruta": "",
+            "circulos": 16
+      },
+      {
+            "iso": "CL-AR",
+            "region": "La Araucanía",
+            "poblacion": 1010423,
+            "centros": 1,
+            "aceleradores": 2,
+            "estado": "acceso local",
+            "derivacion": "Acceso en la región",
+            "distancia_km": 0,
+            "ruta": "",
+            "circulos": 10
+      },
+      {
+            "iso": "CL-LR",
+            "region": "Los Ríos",
+            "poblacion": 398230,
+            "centros": 1,
+            "aceleradores": 3,
+            "estado": "acceso local",
+            "derivacion": "Acceso en la región",
+            "distancia_km": 0,
+            "ruta": "",
+            "circulos": 4
+      },
+      {
+            "iso": "CL-LL",
+            "region": "Los Lagos",
+            "poblacion": 890284,
+            "centros": 0,
+            "aceleradores": 0,
+            "estado": "dependencia",
+            "derivacion": "Los Ríos",
+            "distancia_km": 185,
+            "ruta": "Puerto Montt → Valdivia",
+            "circulos": 9
+      },
+      {
+            "iso": "CL-AI",
+            "region": "Aysén",
+            "poblacion": 100745,
+            "centros": 0,
+            "aceleradores": 0,
+            "estado": "dependencia",
+            "derivacion": "Los Ríos",
+            "distancia_km": null,
+            "ruta": "Coyhaique → Valdivia",
+            "circulos": 1
+      },
+      {
+            "iso": "CL-MA",
+            "region": "Magallanes",
+            "poblacion": 166537,
+            "centros": 1,
+            "aceleradores": 1,
+            "estado": "acceso local",
+            "derivacion": "Acceso en la región",
+            "distancia_km": 0,
+            "ruta": "",
+            "circulos": 2
+      }
+];
+    const formatNumber = new Intl.NumberFormat('es-CL');
+    const formatMillion = n => (n/1000000).toLocaleString('es-CL', { maximumFractionDigits: 2, minimumFractionDigits: 2 }).replace(',00','') + ' millones';
+    const grid = document.getElementById('circleGrid'); const panel = document.getElementById('detailPanel'); const tooltip = document.getElementById('tooltip'); const routeList = document.getElementById('routeList'); let activeFilter = 'todos';
+    function dotClass(region) { return region.estado === 'acceso local' ? 'local' : 'dependencia'; }
+    function dotLabel(region) { const dist = region.distancia_km ? `, a ${formatNumber.format(region.distancia_km)} km aprox.` : ''; if (region.estado === 'dependencia') return `${region.region}: ${formatNumber.format(region.poblacion)} habitantes. Derivación habitual: ${region.derivacion}${dist}.`; return `${region.region}: ${formatNumber.format(region.poblacion)} habitantes. ${region.aceleradores} acelerador(es) lineal(es).`; }
+    function renderDots() { grid.innerHTML = ''; DATA.forEach(region => { for (let i=0; i<region.circulos; i++) { const dot = document.createElement('button'); dot.className = `person-dot ${dotClass(region)}`; dot.type='button'; dot.setAttribute('aria-label', dotLabel(region)); dot.dataset.region=region.region; dot.dataset.estado=region.estado; if (activeFilter !== 'todos' && region.estado !== activeFilter) dot.classList.add('dim'); dot.addEventListener('mouseenter', e => showTooltip(e, region)); dot.addEventListener('mousemove', moveTooltip); dot.addEventListener('mouseleave', hideTooltip); dot.addEventListener('click', () => selectRegion(region)); grid.appendChild(dot); } }); }
+    function selectRegion(region) { document.querySelectorAll('.person-dot').forEach(d => d.classList.toggle('active', d.dataset.region === region.region)); const isDep = region.estado === 'dependencia'; const klass = dotClass(region); const distText = region.distancia_km ? `, a <strong>${formatNumber.format(region.distancia_km)} km aprox.</strong>` : ' — distancia por confirmar'; panel.innerHTML = `<span class="pill ${klass}">${isDep ? 'Depende de otra región' : 'Acceso en su región'}</span><h3>${region.region}</h3><p><strong>${formatNumber.format(region.poblacion)} habitantes</strong></p><p>${region.centros} centro(s) y ${region.aceleradores} acelerador(es) lineal(es).</p>${isDep ? `<p><strong>Derivación habitual:</strong> ${region.derivacion}${distText}.</p><p><strong>Ruta de referencia:</strong> ${region.ruta}.</p>` : '<p>La región cuenta con acceso local a radioterapia, aunque la disponibilidad efectiva depende de capacidad, listas de espera y derivaciones clínicas.</p>'}`; }
+    function showTooltip(e, region) { const dist = region.distancia_km ? ` · ${formatNumber.format(region.distancia_km)} km aprox.` : ''; tooltip.innerHTML = region.estado === 'dependencia' ? `<b>${region.region}</b>${formatNumber.format(region.poblacion)} habitantes<br>Derivación: ${region.derivacion}${dist}` : `<b>${region.region}</b>${formatNumber.format(region.poblacion)} habitantes<br>${region.aceleradores} acelerador(es) lineal(es)`; tooltip.style.opacity = 1; moveTooltip(e); }
+    function moveTooltip(e) { tooltip.style.transform = `translate(${e.clientX + 14}px, ${e.clientY + 14}px)`; }
+    function hideTooltip() { tooltip.style.opacity = 0; tooltip.style.transform = 'translate(-9999px,-9999px)'; }
+    function renderRoutes() { routeList.innerHTML = ''; DATA.filter(d => d.estado === 'dependencia').forEach(region => { const item = document.createElement('button'); item.className='route'; item.type='button'; const dist = region.distancia_km ? `a ${formatNumber.format(region.distancia_km)} km aprox.` : 'distancia por confirmar'; item.innerHTML = `<strong>${region.region} → ${region.derivacion}</strong><span>${formatNumber.format(region.poblacion)} habitantes · ${dist}</span>`; item.addEventListener('click', () => selectRegion(region)); routeList.appendChild(item); }); }
+    document.querySelectorAll('button.filter').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('button.filter').forEach(b => b.classList.remove('active')); btn.classList.add('active'); activeFilter = btn.dataset.filter; renderDots(); }); });
+    document.getElementById('depNum').textContent = formatMillion(4236965); document.getElementById('localNum').textContent = formatMillion(14243467); renderDots(); renderRoutes();
+  </script>
+</body>
+</html>

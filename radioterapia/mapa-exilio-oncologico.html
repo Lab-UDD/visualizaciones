@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El mapa del exilio oncológico · Radioterapia en Chile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12171e; --panel:#1b232c; --panel2:#232e39; --line:#2e3a46;
+    --steel:#5e7c8e; --amber:#eb9b2d; --clay:#df5a43; --hub:#f2d49a;
+    --text:#eef1f3; --muted:#90a1ae; --muted2:#67767f;
+    --disp:'Archivo',sans-serif; --body:'IBM Plex Sans',sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box}
+  .rt-app{
+    background:var(--ink); color:var(--text); font-family:var(--body);
+    font-size:16px; line-height:1.5; padding:clamp(18px,3vw,34px);
+    border:1px solid var(--line); border-radius:14px; max-width:1140px; margin:0 auto;
+    -webkit-font-smoothing:antialiased;
+  }
+  .rt-app *{margin:0}
+  .eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--clay); display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--clay)}
+  h1.rt-title{font-family:var(--disp); font-weight:800; font-size:clamp(28px,5vw,46px); line-height:1.02; letter-spacing:-.015em; margin:14px 0 0}
+  h1.rt-title em{font-style:normal; color:var(--amber)}
+  .lede{color:var(--muted); max-width:64ch; margin-top:12px; font-size:clamp(15px,1.6vw,17px)}
+  .lede b{color:var(--text); font-weight:600}
+
+  .tabs{display:flex; gap:6px; margin:26px 0 18px; border-bottom:1px solid var(--line); flex-wrap:wrap}
+  .tab{appearance:none; background:none; border:none; color:var(--muted); font-family:var(--disp); font-weight:600; font-size:15px; padding:11px 14px; cursor:pointer; border-bottom:2px solid transparent; transition:color .15s, border-color .15s}
+  .tab:hover{color:var(--text)}
+  .tab[aria-selected="true"]{color:var(--text); border-color:var(--clay)}
+  .tab:focus-visible{outline:2px solid var(--amber); outline-offset:2px; border-radius:6px}
+
+  .view{display:none}
+  .view.active{display:block}
+
+  /* ---- MAP VIEW ---- */
+  .map-grid{display:grid; grid-template-columns:300px 1fr; gap:22px; align-items:start}
+  @media(max-width:760px){ .map-grid{grid-template-columns:1fr} }
+
+  .ribbon-wrap{position:relative}
+  .ribbon-head{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted2); display:flex; justify-content:space-between; margin-bottom:8px}
+  .ribbon{position:relative; display:flex; flex-direction:column; gap:3px; padding-left:46px}
+  .arc-layer{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; z-index:3}
+  .region{position:relative; appearance:none; text-align:left; cursor:pointer; border:none; border-radius:5px;
+    padding:9px 11px; font-family:var(--body); font-size:13.5px; font-weight:500; color:#0d1217;
+    display:flex; align-items:center; justify-content:space-between; gap:8px; transition:transform .12s, box-shadow .12s, filter .12s; width:100%}
+  .region:hover{transform:translateX(3px); filter:brightness(1.08)}
+  .region:focus-visible{outline:2px solid #fff; outline-offset:2px}
+  .region.con{background:var(--steel)}
+  .region.sin{background:var(--amber)}
+  .region.sel{box-shadow:0 0 0 2px var(--ink), 0 0 0 4px currentColor}
+  .region.sel.con{color:var(--steel)} .region.sel.sin{color:var(--amber)}
+  .region .rname{color:#0d1217; font-weight:600; letter-spacing:-.01em}
+  .region .rtag{font-family:var(--mono); font-size:10px; letter-spacing:.05em; color:#10161c; opacity:.62; white-space:nowrap}
+  .region.hub::after{content:""; position:absolute; left:-46px; top:50%; transform:translateY(-50%); width:11px; height:11px; border-radius:50%; background:var(--hub); box-shadow:0 0 0 3px var(--ink), 0 0 12px var(--hub)}
+  .region.hasdata::before{content:""; position:absolute; left:-25px; top:50%; transform:translateY(-50%); width:6px; height:6px; border-radius:50%; background:var(--clay)}
+
+  .legend{display:flex; flex-wrap:wrap; gap:14px 18px; margin-top:16px; font-size:12px; color:var(--muted)}
+  .legend span{display:inline-flex; align-items:center; gap:7px}
+  .swatch{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .swatch.con{background:var(--steel)} .swatch.sin{background:var(--amber)}
+  .swatch.data{width:8px;height:8px;border-radius:50%;background:var(--clay)}
+  .swatch.hub{width:10px;height:10px;border-radius:50%;background:var(--hub)}
+
+  /* ---- DETAIL PANEL ---- */
+  .detail{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px; min-height:360px}
+  .d-status{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; display:inline-flex; align-items:center; gap:7px; padding:4px 9px; border-radius:20px}
+  .d-status.sin{color:var(--amber); background:rgba(235,155,45,.12)}
+  .d-status.con{color:var(--steel); background:rgba(94,124,142,.16)}
+  .d-region{font-family:var(--disp); font-weight:800; font-size:clamp(24px,3.4vw,34px); letter-spacing:-.02em; margin:12px 0 2px; line-height:1.05}
+  .d-sub{color:var(--muted); font-size:14.5px; max-width:60ch}
+  .d-sub b{color:var(--text); font-weight:600}
+  .d-route{display:inline-flex; align-items:center; gap:9px; margin-top:14px; font-size:14px; background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 13px}
+  .d-route .arr{color:var(--clay); font-weight:700}
+  .d-route b{color:var(--hub)}
+  .d-route .km{font-family:var(--mono); font-size:11px; color:var(--muted2)}
+
+  .chartbox{margin-top:20px}
+  .chartbox h4{font-family:var(--disp); font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px}
+  .bars{display:flex; align-items:flex-end; gap:clamp(6px,1.6vw,16px); height:130px; padding-top:6px}
+  .barcol{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end; min-width:0}
+  .bar{width:100%; max-width:46px; border-radius:4px 4px 0 0; background:var(--amber); position:relative; display:flex; align-items:flex-start; justify-content:center; transition:height .5s cubic-bezier(.2,.8,.2,1)}
+  .bar .sub{position:absolute; bottom:0; left:0; right:0; background:var(--clay); border-radius:0 0 0 0}
+  .bar .val{position:absolute; top:-19px; font-family:var(--mono); font-size:11px; color:var(--text); font-weight:500}
+  .barlbl{font-family:var(--mono); font-size:11px; color:var(--muted2)}
+
+  .factgrid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:22px}
+  @media(max-width:420px){ .factgrid{grid-template-columns:1fr} }
+  .fact{background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:12px 13px}
+  .fact .k{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted2); margin-bottom:5px}
+  .fact .v{font-size:14px; color:var(--text); line-height:1.35}
+  .fact .v.alert{color:var(--clay); font-weight:600}
+
+  .source{margin-top:20px; padding-top:14px; border-top:1px dashed var(--line); font-family:var(--mono); font-size:11px; color:var(--muted2); line-height:1.5}
+  .source b{color:var(--muted); font-weight:500}
+
+  /* ---- NATIONAL VIEW ---- */
+  .nat-intro{max-width:70ch; color:var(--muted); margin-bottom:24px}
+  .nat-intro b{color:var(--text)}
+  .nat-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px}
+  @media(max-width:720px){ .nat-grid{grid-template-columns:1fr} }
+  .ncard{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px}
+  .ncard h3{font-family:var(--disp); font-size:16px; font-weight:700; margin-bottom:3px}
+  .ncard .hint{font-size:13px; color:var(--muted); margin-bottom:18px}
+  .bigstat{display:flex; align-items:baseline; gap:10px; margin-bottom:14px; flex-wrap:wrap}
+  .bigstat .num{font-family:var(--disp); font-weight:800; font-size:40px; color:var(--clay); letter-spacing:-.02em; line-height:1}
+  .bigstat .cap{font-size:13px; color:var(--muted); max-width:24ch}
+  .nat-note{margin-top:24px; background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--amber); border-radius:8px; padding:14px 16px; font-size:14px; color:var(--muted)}
+  .nat-note b{color:var(--text)}
+
+  .foot{margin-top:30px; padding-top:18px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--muted2)}
+  .foot .by{font-family:var(--mono)}
+  .foot .by b{color:var(--muted)}
+
+  @media(prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} }
+</style>
+</head>
+<body>
+<div class="rt-app">
+  <div class="eyebrow"><span class="dot"></span> Reportaje · Radioterapia en Chile · Datos de transparencia</div>
+  <h1 class="rt-title">El mapa del <em>exilio oncológico</em></h1>
+  <p class="lede">En Chile solo <b>8 de 16 regiones</b> realizan radioterapia. Quien vive en las otras ocho debe abandonar su región para tratarse el cáncer. Explora, con los datos que entregaron los propios servicios de salud, <b>cuántos pacientes son enviados fuera</b> de su territorio cada año y a dónde.</p>
+
+  <div class="tabs" role="tablist" aria-label="Vistas">
+    <button class="tab" role="tab" id="tab-map" aria-controls="view-map" aria-selected="true">Mapa del exilio</button>
+    <button class="tab" role="tab" id="tab-nat" aria-controls="view-nat" aria-selected="false">El Estado paga al privado</button>
+  </div>
+
+  <!-- ================= MAP VIEW ================= -->
+  <section class="view active" id="view-map" role="tabpanel" aria-labelledby="tab-map">
+    <div class="map-grid">
+      <div class="ribbon-wrap">
+        <div class="ribbon-head"><span>↑ Norte</span><span>Regiones de Chile</span></div>
+        <div class="ribbon" id="ribbon">
+          <svg class="arc-layer" id="arcLayer" preserveAspectRatio="none" aria-hidden="true"></svg>
+        </div>
+        <div class="ribbon-head" style="margin-top:8px"><span>↓ Sur</span></div>
+        <div class="legend">
+          <span><i class="swatch sin"></i> Sin centro</span>
+          <span><i class="swatch con"></i> Con centro</span>
+          <span><i class="swatch data"></i> Con datos de transparencia</span>
+          <span><i class="swatch hub"></i> Centro de referencia</span>
+        </div>
+      </div>
+
+      <div class="detail" id="detail" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ================= NATIONAL VIEW ================= -->
+  <section class="view" id="view-nat" role="tabpanel" aria-labelledby="tab-nat" hidden>
+    <p class="nat-intro">Cuando el sistema público no alcanza a tratar la demanda, FONASA deriva al paciente a un prestador privado tras un reclamo GES. Entre <b>2020 y 2024</b> esas derivaciones se dispararon: el Estado financia cada vez más la atención que no puede dar.</p>
+    <div class="nat-grid">
+      <div class="ncard">
+        <h3>Pacientes derivados al sector privado</h3>
+        <p class="hint">Derivaciones GES a 2.º prestador, por año.</p>
+        <div class="bigstat"><span class="num" id="nstat1">×12</span><span class="cap">más derivaciones en 2024 (1.938) que en 2020 (158).</span></div>
+        <div class="bars" id="natBars1"></div>
+      </div>
+      <div class="ncard">
+        <h3>Gasto público en radioterapia privada</h3>
+        <p class="hint">Monto ejecutado por año (suma de la tabla FONASA, en millones de pesos).</p>
+        <div class="bigstat"><span class="num" id="nstat2">$5.305M</span><span class="cap">ejecutados en 2024, el año peak.</span></div>
+        <div class="bars" id="natBars2"></div>
+      </div>
+    </div>
+    <div class="nat-note">FONASA <b>no registra rechazos</b> de segundo prestador: las derivaciones solo aparecen en el sistema <i>después</i> de que el paciente presenta un reclamo formal. El tiempo entre diagnóstico, espera, reclamo y derivación no queda contabilizado.<br><span style="font-family:var(--mono);font-size:11px;color:var(--muted2)">Fuente: Oficio ORD 1G N.º 12778/2026 · FONASA División Jurídica · 25-05-2026. *2026 con corte al 19-05-2026.</span></div>
+  </section>
+
+  <div class="foot">
+    <span class="by"><b>Reportaje:</b> Antonia Cisternas y Ayelen Ortega</span>
+    <span>Solicitudes Ley N.º 20.285 de Transparencia · 2026</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---------- DATA ----------
+  const regions = [
+    {id:'arica', name:'Arica y Parinacota', status:'sin', ref:'arica→ Antofagasta',
+      data:{
+        route:{to:'Antofagasta', km:'~700 km'},
+        sub:'No cuenta con centro de radioterapia. La totalidad de los pacientes es derivada a <b>Antofagasta</b>, su centro de referencia.',
+        series:{label:'Traslados realizados por año', unit:'traslados', vals:{'2022':437,'2023':534,'2024':190,'2025':181}},
+        facts:[
+          {k:'Espera para hora (COA)', v:'15 días a 1 mes, según patología y si es GES'},
+          {k:'Rechazo / abandono', v:'≈10 pacientes al año, por problemas de salud y miedo al tratamiento', alert:true},
+          {k:'Apoyo al traslado', v:'Alojamiento gestionado por Asistencia Social con referentes de Antofagasta'},
+          {k:'Tiempo indicación → inicio', v:'No se registra (la unidad de traslados no integra el comité oncológico)'}
+        ],
+        source:'Oficio ORD N.º 2787 · Hospital Regional de Arica «Dr. Juan Noé Crevani» · 09-06-2026'
+      }},
+    {id:'tarapaca', name:'Tarapacá', status:'sin',
+      data:{
+        route:{to:'Antofagasta', km:'~390 km'},
+        sub:'No cuenta con centro de radioterapia. Según el Hospital de Iquique, <b>la totalidad de los casos</b> se deriva a Antofagasta.',
+        series:{label:'Pacientes derivados por año', unit:'derivados', vals:{'2021':146,'2022':194,'2023':494,'2024':619}},
+        facts:[
+          {k:'Destino', v:'Hospital de Antofagasta (centro de referencia del norte)'},
+          {k:'Detalle', v:'La entrega incluye desglose mes a mes (2021–2024)'},
+          {k:'Tendencia', v:'Los derivados se cuadruplicaron entre 2021 y 2024', alert:true}
+        ],
+        source:'Oficio ORD N.º 2699 · Hospital «Dr. Ernesto Torres Galdames», Iquique · 02-06-2026'
+      }},
+    {id:'antofagasta', name:'Antofagasta', status:'con', hub:true,
+      note:'<b>Único centro del norte.</b> Dos aceleradores lineales y una máquina de braquiterapia para toda la macrozona norte (Arica, Tarapacá, Antofagasta y Atacama). Las esperas llegan a 3 meses y muchos pacientes terminan derivados a Valparaíso o Santiago.'},
+    {id:'atacama', name:'Atacama', status:'sin',
+      data:{
+        route:{to:'Antofagasta', km:'~560 km'},
+        sub:'No cuenta con centro de radioterapia. Sus pacientes viajan a <b>Antofagasta</b>. Es la única región que entregó, además, el número de quienes <b>rechazaron el tratamiento</b>.',
+        series:{label:'Usuarios derivados (y quienes rechazaron)', unit:'usuarios', vals:{'2019':1,'2021':3,'2022':37,'2023':28,'2024':67,'2025':107,'2026':45}, sub:{'2022':2,'2023':2,'2024':11,'2025':6}},
+        facts:[
+          {k:'Espera promedio', v:'Variable, entre 30 y 45 días'},
+          {k:'Rechazo de tratamiento', v:'21 de 288 usuarios (acumulado); el peak fue 11 en 2024', alert:true},
+          {k:'Apoyo al traslado', v:'Convenios con transporte y casa de acogida en Antofagasta; los hospitales financian los pasajes'},
+          {k:'Rechazo por traslado', v:'La región declara que no existe, porque cubre los pasajes'}
+        ],
+        source:'Oficio ORD N.º 1174 · Servicio de Salud Atacama · 10-06-2026'
+      }},
+    {id:'coquimbo', name:'Coquimbo', status:'sin',
+      note:'No cuenta con centro de radioterapia. <span style="color:var(--muted2)">Sin datos de transparencia en esta entrega.</span>'},
+    {id:'valparaiso', name:'Valparaíso', status:'con',
+      note:'Cuenta con centro de radioterapia (Hospital Van Buren), que también recibe derivaciones del norte cuando Antofagasta no da abasto.'},
+    {id:'metropolitana', name:'Metropolitana', status:'con',
+      note:'Concentra la mayoría de los centros y equipos del país. Aun así, la desigualdad se vive <i>dentro</i> de la región: casos como el de Yaritti muestran esperas de casi un año para un diagnóstico.'},
+    {id:'ohiggins', name:"O'Higgins", status:'sin',
+      note:'No cuenta con centro de radioterapia. <span style="color:var(--muted2)">Sin datos de transparencia en esta entrega.</span>'},
+    {id:'maule', name:'Maule', status:'con',
+      note:'Cuenta con centro de radioterapia.'},
+    {id:'nuble', name:'Ñuble', status:'sin',
+      data:{
+        route:{to:'Concepción', km:'~100 km'},
+        sub:'No cuenta con centro de radioterapia. Sus pacientes son derivados al <b>Hospital Guillermo Grant Benavente (HGGB) de Concepción</b>.',
+        series:{label:'Pacientes derivados por año', unit:'derivados', vals:{'2023':509,'2024':608,'2025':575}},
+        facts:[
+          {k:'Espera (2025)', v:'Primera consulta: 14–19 días · Inicio de RT: 23–36 días desde la 1.ª consulta'},
+          {k:'Apoyo al traslado', v:'Bus de acercamiento gratuito diario desde el HCHM a Concepción (paciente y acompañante)'},
+          {k:'Alojamiento', v:'Dos casas de acogida gratuitas en Concepción, según disponibilidad de cupos'},
+          {k:'Rechazo / abandono', v:'La institución no cuenta con registros'}
+        ],
+        source:'Carta Folio AO026T0002675 · Servicio de Salud Ñuble · 02-06-2026'
+      }},
+    {id:'biobio', name:'Biobío', status:'con', hub:true,
+      note:'<b>Concepción (HGGB)</b> es el centro de referencia para los pacientes de Ñuble.'},
+    {id:'araucania', name:'La Araucanía', status:'con',
+      note:'El único centro disponible es <b>privado</b>. Quien no puede acceder debe esperar una derivación a otra región.'},
+    {id:'losrios', name:'Los Ríos', status:'con',
+      note:'El Hospital Base de Valdivia cubre la mayor extensión territorial del país (Los Ríos, Los Lagos, Aysén y, a veces, Magallanes o La Araucanía). Ante la saturación, deriva pacientes a <b>Bariloche, Argentina</b>.'},
+    {id:'loslagos', name:'Los Lagos', status:'sin',
+      note:'No cuenta con centro de radioterapia; hoy se atiende vía Valdivia. Puerto Montt inaugurará una clínica oncológica —la primera vez que la radioterapia se acerca a la región—, pero será <b>privada</b>.'},
+    {id:'aysen', name:'Aysén', status:'sin',
+      note:'No cuenta con centro de radioterapia. Su referencia es el Hospital Base de Valdivia, a cientos de kilómetros.'},
+    {id:'magallanes', name:'Magallanes', status:'con',
+      note:'Su centro de radioterapia fue creado por la <b>intendencia regional</b>, no por el sistema de salud, para que los pacientes no tuvieran que salir de Punta Arenas.'}
+  ];
+
+  const natDeriv = {'2020':158,'2021':596,'2022':763,'2023':1071,'2024':1938,'2025':1448};
+  const natSpend = {'2020':379,'2021':933,'2022':1314,'2023':2650,'2024':5305,'2025':4049}; // millones CLP
+
+  // ---------- BUILD RIBBON ----------
+  const ribbon = document.getElementById('ribbon');
+  const arcLayer = document.getElementById('arcLayer');
+  const detail = document.getElementById('detail');
+  regions.forEach((r,i)=>{
+    const b=document.createElement('button');
+    b.className='region '+r.status+(r.hub?' hub':'')+(r.data?' hasdata':'');
+    b.dataset.idx=i; b.type='button';
+    b.setAttribute('aria-pressed','false');
+    const tag = r.hub ? 'referencia' : (r.data ? 'datos' : '');
+    b.innerHTML='<span class="rname">'+r.name+'</span><span class="rtag">'+tag+'</span>';
+    b.addEventListener('click',()=>select(i));
+    ribbon.appendChild(b);
+  });
+  const btns=[...ribbon.querySelectorAll('.region')];
+
+  function fmt(n){return n.toLocaleString('es-CL');}
+
+  // ---------- DETAIL RENDER ----------
+  function buildBars(series){
+    const yrs=Object.keys(series.vals);
+    const max=Math.max(...Object.values(series.vals));
+    let h='<div class="chartbox"><h4>'+series.label+'</h4><div class="bars">';
+    yrs.forEach(y=>{
+      const v=series.vals[y]; const hp=Math.max(4,(v/max)*100);
+      const sv=series.sub&&series.sub[y]?series.sub[y]:0;
+      const sp=sv? (sv/v)*100 : 0;
+      h+='<div class="barcol"><div class="bar" style="height:'+hp+'%">'
+        +'<span class="val">'+fmt(v)+'</span>'
+        +(sv?'<span class="sub" style="height:'+sp+'%" title="Rechazaron: '+sv+'"></span>':'')
+        +'</div><span class="barlbl">'+y+'</span></div>';
+    });
+    h+='</div>';
+    if(series.sub) h+='<p style="font-size:11px;color:var(--muted2);font-family:var(--mono);margin-top:8px">▮ en rojo: usuarios que rechazaron el tratamiento</p>';
+    h+='</div>';
+    return h;
+  }
+
+  function select(i){
+    const r=regions[i];
+    btns.forEach((b,j)=>{b.classList.toggle('sel',j===i); b.setAttribute('aria-pressed', j===i?'true':'false');});
+    let html='';
+    if(r.data){
+      const d=r.data;
+      html+='<span class="d-status sin">● Sin centro de radioterapia</span>';
+      html+='<h2 class="d-region">'+r.name+'</h2>';
+      html+='<p class="d-sub">'+d.sub+'</p>';
+      if(d.route) html+='<div class="d-route">Pacientes <span class="arr">→</span> <b>'+d.route.to+'</b> <span class="km">'+d.route.km+' fuera de la región</span></div>';
+      html+=buildBars(d.series);
+      html+='<div class="factgrid">';
+      d.facts.forEach(f=>{html+='<div class="fact"><div class="k">'+f.k+'</div><div class="v'+(f.alert?' alert':'')+'">'+f.v+'</div></div>';});
+      html+='</div>';
+      html+='<div class="source"><b>Fuente:</b> '+d.source+'</div>';
+    } else {
+      const cls=r.status==='sin'?'sin':'con';
+      const lbl=r.status==='sin'?'● Sin centro de radioterapia':'● Con centro de radioterapia';
+      html+='<span class="d-status '+cls+'">'+lbl+'</span>';
+      html+='<h2 class="d-region">'+r.name+'</h2>';
+      html+='<p class="d-sub" style="margin-top:14px">'+(r.note||'')+'</p>';
+      if(r.hub) html+='<div class="d-route" style="margin-top:18px">★ <b>Centro de referencia</b> <span class="km">recibe pacientes de otras regiones</span></div>';
+    }
+    detail.innerHTML=html;
+    drawArc(i);
+  }
+
+  // ---------- ARC (origin -> reference center) ----------
+  const refOf={arica:'antofagasta', tarapaca:'antofagasta', atacama:'antofagasta', nuble:'biobio'};
+  function drawArc(i){
+    arcLayer.innerHTML='';
+    const r=regions[i];
+    const refId=refOf[r.id];
+    if(!refId) return;
+    const refIdx=regions.findIndex(x=>x.id===refId);
+    const wrap=ribbon.getBoundingClientRect();
+    const a=btns[i].getBoundingClientRect();
+    const b=btns[refIdx].getBoundingClientRect();
+    const W=wrap.width, H=wrap.height;
+    arcLayer.setAttribute('viewBox','0 0 '+W+' '+H);
+    const x0=44, y0=a.top-wrap.top+a.height/2;
+    const x1=44, y1=b.top-wrap.top+b.height/2;
+    const bulge=8;
+    const path=`M ${x0} ${y0} C ${bulge} ${y0}, ${bulge} ${y1}, ${x1} ${y1}`;
+    const ns='http://www.w3.org/2000/svg';
+    const p=document.createElementNS(ns,'path');
+    p.setAttribute('d',path); p.setAttribute('fill','none');
+    p.setAttribute('stroke','var(--clay)'); p.setAttribute('stroke-width','2');
+    p.setAttribute('stroke-linecap','round');
+    arcLayer.appendChild(p);
+    try{
+      const L=p.getTotalLength();
+      p.style.strokeDasharray=L; p.style.strokeDashoffset=L;
+      p.animate([{strokeDashoffset:L},{strokeDashoffset:0}],{duration:650,easing:'cubic-bezier(.3,.8,.3,1)',fill:'forwards'});
+      const dot=document.createElementNS(ns,'circle');
+      dot.setAttribute('r','3.5'); dot.setAttribute('fill','var(--hub)');
+      arcLayer.appendChild(dot);
+      dot.animate([{offsetDistance:'0%'},{offsetDistance:'100%'}],{duration:1400,iterations:Infinity,easing:'ease-in-out'});
+      dot.style.offsetPath=`path('${path}')`;
+    }catch(e){}
+  }
+
+  // ---------- NATIONAL BARS ----------
+  function natBarChart(el, obj, color, prefix){
+    const yrs=Object.keys(obj); const max=Math.max(...Object.values(obj));
+    let h='';
+    yrs.forEach(y=>{
+      const v=obj[y]; const hp=Math.max(4,(v/max)*100);
+      const lab=prefix==='$'?('$'+fmt(v)):fmt(v);
+      h+='<div class="barcol"><div class="bar" style="height:'+hp+'%;background:'+color+'"><span class="val">'+lab+'</span></div><span class="barlbl">'+y+'</span></div>';
+    });
+    el.innerHTML=h;
+  }
+  natBarChart(document.getElementById('natBars1'), natDeriv, 'var(--clay)','');
+  natBarChart(document.getElementById('natBars2'), natSpend, 'var(--amber)','$');
+
+  // ---------- TABS ----------
+  const tabs=[document.getElementById('tab-map'),document.getElementById('tab-nat')];
+  const views={'tab-map':document.getElementById('view-map'),'tab-nat':document.getElementById('view-nat')};
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    tabs.forEach(x=>x.setAttribute('aria-selected', x===t?'true':'false'));
+    Object.entries(views).forEach(([id,v])=>{
+      const on=(id===t.id); v.classList.toggle('active',on); v.hidden=!on;
+    });
+    if(t.id==='tab-map' && curSel!=null){ requestAnimationFrame(()=>drawArc(curSel)); }
+  }));
+
+  // ---------- INIT ----------
+  let curSel=0;
+  const origSelect=select;
+  window.addEventListener('resize',()=>{ if(curSel!=null && views['tab-map'].classList.contains('active')) drawArc(curSel); });
+  // wrap select to track current
+  function selectTracked(i){ curSel=i; origSelect(i); }
+  btns.forEach((b,i)=>{ b.onclick=()=>selectTracked(i); });
+  selectTracked(0); // default: Arica
+})();
+</script>
+</body>
+</html>

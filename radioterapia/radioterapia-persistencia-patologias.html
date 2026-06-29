@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Radioterapia en Chile: patologías con mayores listas de espera</title>
+  <style>
+    :root {
+      --celeste: #85b7ea;
+      --azul: #0b447c;
+      --blanco: #ffffff;
+      --negro: #222222;
+      --gris-texto: #555555;
+      --gris-linea: #e7edf4;
+      --gris-fondo: #f6f9fc;
+      --gris-fondo-2: #eef5fb;
+      --radio: 16px;
+      --max: 678;
+      --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--blanco);
+      color: var(--negro);
+      font-family: var(--font);
+      line-height: 1.45;
+    }
+
+    .viz-radioterapia {
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 28px 16px 34px;
+      background: var(--blanco);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--azul);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0;
+      color: var(--negro);
+      font-size: clamp(1.55rem, 3vw, 2.35rem);
+      line-height: 1.12;
+      letter-spacing: -0.025em;
+    }
+
+    .lead {
+      max-width: 830px;
+      margin: 12px 0 0;
+      color: var(--gris-texto);
+      font-size: clamp(1rem, 1.4vw, 1.08rem);
+    }
+
+    .callout {
+      margin: 22px 0;
+      padding: 16px 18px;
+      background: var(--gris-fondo);
+      border: 1px solid var(--gris-linea);
+      border-left: 6px solid var(--azul);
+      border-radius: var(--radio);
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--azul);
+      font-size: 1.05rem;
+    }
+
+    .callout p {
+      margin: 0;
+      color: var(--negro);
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin: 0 0 14px;
+      color: var(--gris-texto);
+      font-size: 0.92rem;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend span::before {
+      content: "";
+      width: 28px;
+      height: 10px;
+      background: var(--celeste);
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .chart {
+      border: 1px solid var(--gris-linea);
+      border-radius: var(--radio);
+      overflow: hidden;
+      background: var(--blanco);
+    }
+
+    .pathology-block {
+      display: grid;
+      grid-template-columns: minmax(180px, 0.85fr) minmax(0, 2.6fr);
+      gap: 0;
+      border-bottom: 1px solid var(--gris-linea);
+    }
+
+    .pathology-block:last-child {
+      border-bottom: 0;
+    }
+
+    .pathology-name {
+      padding: 18px 16px;
+      background: var(--blanco);
+      border-right: 1px solid var(--gris-linea);
+      font-weight: 800;
+      color: var(--negro);
+    }
+
+    .pathology-name small {
+      display: block;
+      margin-top: 6px;
+      color: var(--gris-texto);
+      font-weight: 500;
+      font-size: 0.8rem;
+    }
+
+    .top-three .pathology-name {
+      background: var(--gris-fondo-2);
+    }
+
+    .years {
+      padding: 12px 14px;
+    }
+
+    .year-row {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr) 58px;
+      gap: 10px;
+      align-items: center;
+      margin: 7px 0;
+    }
+
+    .year {
+      color: var(--gris-texto);
+      font-weight: 750;
+      font-size: 0.9rem;
+    }
+
+    .bar-bg {
+      height: 16px;
+      border-radius: 999px;
+      background: #edf2f7;
+      overflow: hidden;
+    }
+
+    .bar {
+      height: 100%;
+      width: 0;
+      min-width: 2px;
+      background: var(--celeste);
+      border-radius: inherit;
+    }
+
+    .top-three .bar {
+      background: var(--azul);
+    }
+
+    .value {
+      text-align: right;
+      font-weight: 800;
+      color: var(--negro);
+      font-variant-numeric: tabular-nums;
+    }
+
+    details {
+      margin-top: 12px;
+      border: 1px solid var(--gris-linea);
+      border-radius: var(--radio);
+      background: var(--blanco);
+      overflow: hidden;
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 15px 16px;
+      background: var(--gris-fondo);
+      color: var(--azul);
+      font-weight: 850;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::after {
+      content: " +";
+      float: right;
+      font-weight: 900;
+    }
+
+    details[open] summary::after {
+      content: " –";
+    }
+
+    .minor-list {
+      border-top: 1px solid var(--gris-linea);
+    }
+
+    .minor-list .pathology-block {
+      grid-template-columns: minmax(180px, 0.85fr) minmax(0, 2.6fr);
+    }
+
+    .minor-list .pathology-name {
+      font-weight: 750;
+    }
+
+    .insights {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .insight {
+      padding: 15px;
+      border: 1px solid var(--gris-linea);
+      border-radius: var(--radio);
+      background: var(--gris-fondo);
+    }
+
+    .insight strong {
+      display: block;
+      color: var(--azul);
+      margin-bottom: 5px;
+    }
+
+    .insight p {
+      margin: 0;
+      color: var(--gris-texto);
+      font-size: 0.94rem;
+    }
+
+    .method-note {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #fbfbfb;
+      border: 1px solid var(--gris-linea);
+      color: var(--gris-texto);
+      font-size: 0.88rem;
+    }
+
+    .source {
+      margin: 14px 0 0;
+      color: var(--gris-texto);
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 760px) {
+      .viz-radioterapia {
+        padding: 22px 12px 28px;
+      }
+
+      .pathology-block,
+      .minor-list .pathology-block {
+        display: block;
+      }
+
+      .pathology-name {
+        border-right: 0;
+        border-bottom: 1px solid var(--gris-linea);
+        padding: 14px;
+      }
+
+      .years {
+        padding: 11px 12px 13px;
+      }
+
+      .year-row {
+        grid-template-columns: 48px minmax(0, 1fr) 50px;
+        gap: 8px;
+      }
+
+      .bar-bg {
+        height: 14px;
+      }
+
+      .insights {
+        grid-template-columns: 1fr;
+      }
+
+      summary {
+        padding: 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="viz-radioterapia" aria-labelledby="titulo-radioterapia">
+    <p class="eyebrow">Listas de espera GES · Radioterapia</p>
+    <h2 id="titulo-radioterapia">¿Qué pacientes enfrentan más retrasos para acceder a radioterapia?</h2>
+    <p class="lead">
+      Los datos muestran un patrón consistente entre 2023 y 2025: los mayores volúmenes de espera corresponden a pacientes con cáncer de mama, próstata y colorrectal.
+    </p>
+
+    <section class="callout" aria-label="Hallazgo principal">
+      <strong>Hallazgo principal</strong>
+      <p>
+        Cáncer de mama, próstata y colorrectal aparecen en los tres años como las patologías con más retrasos en listas de espera de radioterapia GES. Esta visualización compara la persistencia del patrón, sin sumar los años como si fueran casos únicos.
+      </p>
+    </section>
+
+    <div class="legend" aria-hidden="true">
+      <span>Más retrasos dentro de cada año y patología</span>
+    </div>
+
+    <section class="chart" id="mainChart" aria-label="Patologías con mayores retrasos en radioterapia entre 2023 y 2025"></section>
+
+    <details>
+      <summary>Ver otras patologías con menor volumen de retrasos</summary>
+      <section class="minor-list" id="minorChart" aria-label="Otras patologías con menor volumen de retrasos"></section>
+    </details>
+
+    <section class="insights" aria-label="Claves de lectura">
+      <article class="insight">
+        <strong>Mama lidera los tres años</strong>
+        <p>Es la patología con mayor volumen de retrasos en 2023, 2024 y 2025.</p>
+      </article>
+      <article class="insight">
+        <strong>Próstata se mantiene segunda</strong>
+        <p>Aparece de forma sostenida como el segundo grupo con más esperas.</p>
+      </article>
+      <article class="insight">
+        <strong>Colorrectal completa el patrón</strong>
+        <p>Se ubica consistentemente en tercer lugar durante el período observado.</p>
+      </article>
+    </section>
+
+    <p class="method-note">
+      Nota metodológica: los datos se presentan año a año. No se suman como total acumulado de personas, porque una misma persona podría permanecer en espera y volver a aparecer en más de un corte anual.
+    </p>
+
+    <p class="source">
+      Fuente: listas de espera de radioterapia GES por año y patología, glosa 06, Subsecretaría de Redes Asistenciales. Datos 2023, 2024 y 2025.
+    </p>
+  </main>
+
+  <script>
+    const data = [
+      { pathology: "Cáncer de mama", y2023: 455, y2024: 678, y2025: 422, group: "main", top: true, note: "Mayor volumen los tres años" },
+      { pathology: "Cáncer de próstata", y2023: 380, y2024: 347, y2025: 266, group: "main", top: true, note: "Segundo lugar los tres años" },
+      { pathology: "Cáncer colorrectal", y2023: 116, y2024: 114, y2025: 73, group: "main", top: true, note: "Tercer lugar los tres años" },
+      { pathology: "Cáncer cervicouterino", y2023: 34, y2024: 53, y2025: 26, group: "main", top: false, note: "Cuarto lugar en 2024" },
+      { pathology: "Cáncer de pulmón", y2023: 25, y2024: 18, y2025: 16, group: "main", top: false, note: "Volumen menor, pero persistente" },
+
+      { pathology: "Linfoma en adultos", y2023: 10, y2024: 21, y2025: 19, group: "minor" },
+      { pathology: "Cáncer vesical", y2023: 6, y2024: 11, y2025: 15, group: "minor" },
+      { pathology: "Mieloma múltiple", y2023: 5, y2024: 12, y2025: 6, group: "minor" },
+      { pathology: "Tumores primarios SNC", y2023: 8, y2024: 11, y2025: 8, group: "minor" },
+      { pathology: "Cáncer renal", y2023: 3, y2024: 9, y2025: 4, group: "minor" },
+      { pathology: "Cáncer gástrico", y2023: 5, y2024: 1, y2025: 3, group: "minor" },
+      { pathology: "Cáncer de testículo", y2023: 1, y2024: 1, y2025: 3, group: "minor" },
+      { pathology: "Cáncer infantil", y2023: 0, y2024: 2, y2025: 2, group: "minor" }
+    ];
+
+    const maxValue = 678;
+    const formatNumber = value => new Intl.NumberFormat("es-CL").format(value);
+
+    function yearRow(year, value) {
+      const width = value === 0 ? 0 : Math.max((value / maxValue) * 100, 1.5);
+      return `
+        <div class="year-row">
+          <div class="year">${year}</div>
+          <div class="bar-bg" aria-hidden="true">
+            <div class="bar" style="width:${width}%"></div>
+          </div>
+          <div class="value">${formatNumber(value)}</div>
+        </div>
+      `;
+    }
+
+    function pathologyBlock(item) {
+      const classes = item.top ? "pathology-block top-three" : "pathology-block";
+      const note = item.note ? `<small>${item.note}</small>` : "";
+      return `
+        <article class="${classes}">
+          <div class="pathology-name">
+            ${item.pathology}
+            ${note}
+          </div>
+          <div class="years">
+            ${yearRow("2023", item.y2023)}
+            ${yearRow("2024", item.y2024)}
+            ${yearRow("2025", item.y2025)}
+          </div>
+        </article>
+      `;
+    }
+
+    document.getElementById("mainChart").innerHTML = data
+      .filter(item => item.group === "main")
+      .map(pathologyBlock)
+      .join("");
+
+    document.getElementById("minorChart").innerHTML = data
+      .filter(item => item.group === "minor")
+      .map(pathologyBlock)
+      .join("");
+  </script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>De la cobertura nacional a la concentración en Santiago</title>
+<style>
+  :root{
+    --page-bg:#FFFFFF;
+    --surface-2:#FFFFFF;
+    --surface-1:#FCECEA;
+    --soft-blue:#EAF3FC;
+    --blue:#0B447C;
+    --light-blue:#85B7EA;
+    --red:#C43D32;
+    --text-primary:#000000;
+    --text-secondary:#3f3f3f;
+    --text-muted:#777777;
+    --border:#ead7d4;
+    --border-strong:#C43D32;
+    --border-accent:#0B447C;
+    --bg-accent:#EAF3FC;
+    --fill-accent:#85B7EA;
+    --text-accent:#0B447C;
+    --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-voice:Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--page-bg);}
+  body{
+    font-family:var(--font-sans);
+    color:var(--text-primary);
+    max-width:880px;
+    margin:0 auto;
+    padding:42px 22px 56px;
+  }
+  .kicker{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin:0 0 10px;}
+  h1{font-size:clamp(28px,5vw,46px);line-height:1.05;margin:0 0 14px;font-weight:850;letter-spacing:-.035em;color:var(--text-primary);}
+  .subtitle{font-size:clamp(16px,2.3vw,19px);line-height:1.55;color:var(--text-secondary);max-width:760px;margin:0 0 24px;}
+  .intro{background:var(--surface-1);border-left:7px solid var(--red);padding:16px 20px;border-radius:14px;margin:24px 0 28px;color:var(--text-secondary);font-size:15px;line-height:1.5;}
+  .funnel-nav{margin:8px 0 1.7rem;}
+  .funnel-step{cursor:pointer;transition:opacity .18s ease, filter .18s ease, transform .18s ease;}
+  .funnel-step:hover .funnel-band{filter:brightness(1.03);}
+  .funnel-step:focus{outline:none;}
+  .funnel-step:focus .funnel-band{stroke-width:3;}
+  .funnel-label{pointer-events:none;font-size:18px;font-weight:850;font-family:var(--font-sans);letter-spacing:-.01em;}
+  .funnel-sub{pointer-events:none;font-size:12px;font-weight:650;font-family:var(--font-sans);opacity:.9;}
+
+  .slide-nav{margin:8px 0 1.45rem;}
+  .slide-track{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+  .slide-tab{appearance:none;border:1px solid #e5e5e5;background:#fff;border-radius:18px;padding:16px 14px;text-align:left;cursor:pointer;min-height:138px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 20px rgba(0,0,0,.045);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease;color:var(--text-primary);font-family:var(--font-sans);}
+  .slide-tab:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(0,0,0,.075);}
+  .slide-tab[aria-current="step"]{border-color:var(--blue);box-shadow:0 14px 30px rgba(11,68,124,.16);}
+  .slide-tab[data-step="1"][aria-current="step"]{background:#85B7EA;color:#000000;}
+  .slide-tab[data-step="2"][aria-current="step"]{background:#0B447C;color:#FFFFFF;}
+  .slide-tab[data-step="3"][aria-current="step"]{background:#FCECEA;border-color:#C43D32;color:#000000;}
+  .slide-tab[data-step="4"][aria-current="step"]{background:#C43D32;border-color:#C43D32;color:#FFFFFF;}
+  .slide-top{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .slide-num{width:32px;height:32px;border-radius:999px;display:grid;place-items:center;font-weight:850;background:#f3f3f3;color:#0B447C;flex-shrink:0;}
+  .slide-tab[aria-current="step"] .slide-num{background:#FFFFFF;}
+  .slide-tab[data-step="4"][aria-current="step"] .slide-num{color:#C43D32;}
+  .slide-label{font-size:15px;line-height:1.18;font-weight:850;letter-spacing:-.015em;}
+  .slide-note{font-size:12px;line-height:1.35;color:inherit;opacity:.78;}
+  .progress-dots{display:flex;justify-content:center;gap:8px;margin:14px 0 2px;}
+  .progress-dot{width:9px;height:9px;border-radius:999px;background:#d6d6d6;border:0;cursor:pointer;padding:0;}
+  .progress-dot[aria-current="step"]{background:var(--blue);width:24px;}
+
+  .step-panel{display:none;animation:fadeIn .18s ease;}
+  .step-panel.active{display:block;}
+  @keyframes fadeIn{from{opacity:.25;transform:translateY(3px);}to{opacity:1;transform:none;}}
+  .panel-wrap{min-height:500px;background:#fff;border:1px solid #eeeeee;border-radius:18px;padding:22px;box-shadow:0 14px 35px rgba(0,0,0,.055);}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
+  .bar-label{width:150px;font-size:13px;color:var(--text-secondary);flex-shrink:0;}
+  .bar-track{flex:1;background:#f1f1f1;border-radius:999px;height:22px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:999px;}
+  .bar-val{width:42px;font-size:13px;font-weight:700;text-align:right;flex-shrink:0;}
+  .region-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;}
+  .region-cell{border-radius:10px;padding:11px 5px;text-align:center;border:1px solid var(--border);}
+  .caption{font-size:14px;color:var(--text-secondary);margin:16px 0 0;line-height:1.5;}
+  .takeaway{background:var(--surface-1);border:1px solid #efd2ce;border-left:6px solid var(--red);border-radius:12px;padding:14px 16px;margin-top:18px;font-weight:800;color:var(--red);line-height:1.4;}
+  .source{font-size:11px;color:var(--text-muted);margin:8px 0 0;line-height:1.4;}
+  .navrow{display:flex;justify-content:space-between;margin-top:1.2rem;}
+  .navbtn{font-family:var(--font-sans);font-size:13px;background:var(--surface-2);border:1px solid #d8d8d8;color:var(--text-primary);padding:9px 15px;border-radius:10px;cursor:pointer;}
+  .navbtn:hover{background:var(--soft-blue);border-color:var(--blue);}
+  .funnel-svg{margin-bottom:1.5rem;display:block;filter:drop-shadow(0 12px 18px rgba(0,0,0,.10));}
+  .funnel-band{transition:opacity .2s ease, stroke-width .2s ease, filter .2s ease;}
+  .funnel-number{pointer-events:none;font-size:17px;font-weight:850;font-family:var(--font-sans);}
+  .funnel-divider{pointer-events:none;opacity:.55;}
+  .final-metric{background:linear-gradient(180deg,#ffffff 0%,#FCECEA 100%);border:1px solid #efd2ce;border-radius:18px;padding:20px;margin-bottom:18px;}
+  .final-metric .num{font-size:clamp(46px,9vw,72px);font-family:var(--font-voice);font-weight:700;line-height:.95;color:var(--red);}
+  .final-metric .label{font-size:15px;color:var(--text-secondary);line-height:1.45;margin-top:8px;}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
+  @media (max-width:560px){
+    body{padding:30px 16px 44px;}
+    .panel-wrap{padding:16px;min-height:520px;}
+    .bar-row{gap:8px;}
+    .bar-label{width:100px;font-size:12px;}
+    .bar-val{width:34px;font-size:12px;}
+    .region-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .slide-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;}
+    .slide-tab{min-width:78%;scroll-snap-align:start;}
+  }
+</style>
+</head>
+<body>
+<h2 class="sr-only">Embudo de cuatro niveles que muestra cómo la cobertura de radioterapia en Chile esconde una fuerte concentración de centros y equipos en la Región Metropolitana</h2>
+<p class="kicker">Radioterapia en Chile</p>
+<h1>De la cobertura nacional a la concentración en Santiago: La inequidad en el acceso a la radioterapia</h1>
+<p class="subtitle">La disponibilidad de radioterapia parece aceptable cuando se analiza a nivel nacional. Sin embargo, al desagregar la información se observa una fuerte concentración territorial de centros y equipos, obligando a miles de pacientes a trasladarse fuera de su región.</p>
+<div class="intro">Avanza por las tarjetas para ver cómo el promedio nacional se estrecha: primero frente al contexto internacional, luego entre regiones, después entre centros y finalmente en la concentración de equipos en la Región Metropolitana.</div>
+
+<nav class="slide-nav" aria-label="Navegación de la visualización">
+  <div class="slide-track" role="list">
+    <button class="slide-tab" data-step="1" aria-current="step" onclick="setStep(1)">
+      <span class="slide-top"><span class="slide-num">1</span><span class="slide-label">Chile en el mundo</span></span>
+      <span class="slide-note">La cobertura parece aceptable cuando se mira el promedio país.</span>
+    </button>
+    <button class="slide-tab" data-step="2" onclick="setStep(2)">
+      <span class="slide-top"><span class="slide-num">2</span><span class="slide-label">¿Dónde hay radioterapia?</span></span>
+      <span class="slide-note">La mitad de las regiones no tiene ningún centro.</span>
+    </button>
+    <button class="slide-tab" data-step="3" onclick="setStep(3)">
+      <span class="slide-top"><span class="slide-num">3</span><span class="slide-label">¿Cuántos centros existen?</span></span>
+      <span class="slide-note">La oferta tampoco se distribuye de forma pareja.</span>
+    </button>
+    <button class="slide-tab" data-step="4" onclick="setStep(4)">
+      <span class="slide-top"><span class="slide-num">4</span><span class="slide-label">¿Dónde se concentran?</span></span>
+      <span class="slide-note">Santiago reúne más de la mitad de centros y equipos.</span>
+    </button>
+  </div>
+  <div class="progress-dots" aria-hidden="true">
+    <button class="progress-dot" data-step="1" aria-current="step" onclick="setStep(1)"></button>
+    <button class="progress-dot" data-step="2" onclick="setStep(2)"></button>
+    <button class="progress-dot" data-step="3" onclick="setStep(3)"></button>
+    <button class="progress-dot" data-step="4" onclick="setStep(4)"></button>
+  </div>
+</nav>
+
+<div class="panel-wrap">
+  <div class="step-panel active" data-step="1">
+    <div class="bar-row"><div class="bar-label">América del Norte</div><div class="bar-track"><div class="bar-fill" style="width:90%;background:#d9d9d9;"></div></div><div class="bar-val">90%</div></div>
+    <div class="bar-row"><div class="bar-label">Europa</div><div class="bar-track"><div class="bar-fill" style="width:85%;background:#d9d9d9;"></div></div><div class="bar-val">85%</div></div>
+    <div class="bar-row"><div class="bar-label" style="color:var(--text-accent);font-weight:500;">Chile</div><div class="bar-track"><div class="bar-fill" style="width:63%;background:var(--light-blue);"></div></div><div class="bar-val" style="color:var(--text-accent);">63%</div></div>
+    <div class="bar-row"><div class="bar-label">América Latina</div><div class="bar-track"><div class="bar-fill" style="width:55%;background:#d9d9d9;"></div></div><div class="bar-val">55%</div></div>
+    <div class="bar-row"><div class="bar-label">Asia</div><div class="bar-track"><div class="bar-fill" style="width:40%;background:#d9d9d9;"></div></div><div class="bar-val">40%</div></div>
+    <div class="bar-row"><div class="bar-label">África</div><div class="bar-track"><div class="bar-fill" style="width:15%;background:#d9d9d9;"></div></div><div class="bar-val">15%</div></div>
+    <p class="caption">Chile supera el promedio de América Latina, pero está lejos de países con su nivel de desarrollo.</p><div class="takeaway">El promedio nacional oculta una brecha: la cobertura estimada de Chile sigue lejos de América del Norte y Europa.</div>
+    <p class="source">Fuente: Letelier / SOCHIRA 2026; Lancet Global Health, 2024</p>
+  </div>
+
+  <div class="step-panel" data-step="2">
+    <div class="region-grid">
+      <div class="region-cell" style="background:var(--surface-1);"><div style="font-size:14px;font-weight:500;color:var(--text-muted);">XV</div><div style="font-size:11px;color:var(--text-muted);">Arica y Parinacota</div></div>
+      <div class="region-cell" style="background:var(--surface-1);"><div style="font-size:14px;font-weight:500;color:var(--text-muted);">I</div><div style="font-size:11px;color:var(--text-muted);">Tarapacá</div></div>
+      <div class="region-cell" style="background:var(--bg-accent);"><div style="font-size:14px;font-weight:500;color:var(--text-accent);">II</div><div style="font-size:11px;color:var(--text-accent);">Antofagasta</div></div>
+      <div class="region-cell" style="background:var(--surface-1);"><div style="font-size:14px;font-weight:500;color:var(--text-muted);">III</div><div style="font-size:11px;color:var(--text-muted);">Atacama</div></div>
+      <div class="region-cell" style="background:var(--surface-1);"><div style="font-size:14px;font-weight:500;color:var(--text-muted);">IV</div><div style="font-size:11px;color:var(--text-muted);">Coquimbo</div></div>
+      <div class="region-cell" style="background:var(--bg-accent);"><div style="font-size:14px;font-weight:500;color:var(--text-accent);">V</div><div style="font-size:11px;color:var(--text-accent);">Valparaíso</div></div>
+      <div class="region-cell" style="background:var(--bg-accent);"><div style="font-size:14px;font-weight:500;color:var(--text-accent);">RM</div><div style="font-size:11px;color:var(--text-accent);">Metropolitana</div></div>
+      <div class="region-cell" style="background:var(--surface-1);"><div style="font-size:14px;font-weight:500;color:var(--text-muted);">VI</div><div style="font-size:11px;color:var(--text-muted);">O'Higgins</div></div>
+      <div class="region-cell" style="background:var(--bg-accent);"><div style="font-size:14px;font-weight:500;color:var(--text-accent);">VII</div><div style="font-size:11px;color:var(--text-accent);">Maule</div></div>
+      <div class="region-cell" style="background:var(--surface-1);"><div style="font-size:14px;font-weight:500;color:var(--text-muted);">XVI</div><div style="font-size:11px;color:var(--text-muted);">Ñuble</div></div>
+      <div class="region-cell" style="background:var(--bg-accent);"><div style="font-size:14px;font-weight:500;color:var(--text-accent);">VIII</div><div style="font-size:11px;color:var(--text-accent);">Biobío</div></div>
+      <div class="region-cell" style="background:var(--bg-accent);"><div style="font-size:14px;font-weight:500;color:var(--text-accent);">IX</div><div style="font-size:11px;color:var(--text-accent);">Araucanía</div></div>
+      <div class="region-cell" style="background:var(--bg-accent);"><div style="font-size:14px;font-weight:500;color:var(--text-accent);">XIV</div><div style="font-size:11px;color:var(--text-accent);">Los Ríos</div></div>
+      <div class="region-cell" style="background:var(--surface-1);"><div style="font-size:14px;font-weight:500;color:var(--text-muted);">X</div><div style="font-size:11px;color:var(--text-muted);">Los Lagos</div></div>
+      <div class="region-cell" style="background:var(--surface-1);"><div style="font-size:14px;font-weight:500;color:var(--text-muted);">XI</div><div style="font-size:11px;color:var(--text-muted);">Aysén</div></div>
+      <div class="region-cell" style="background:var(--bg-accent);"><div style="font-size:14px;font-weight:500;color:var(--text-accent);">XII</div><div style="font-size:11px;color:var(--text-accent);">Magallanes</div></div>
+    </div>
+    <div style="display:flex;gap:16px;margin-top:14px;font-size:12px;color:var(--text-secondary);">
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--bg-accent);border:0.5px solid var(--border-accent);"></span>Con centro (8)</span>
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--surface-1);border:0.5px solid var(--border);"></span>Sin centro (8)</span>
+    </div>
+    <p class="caption">La mitad del país no tiene ningún centro de radioterapia.</p><div class="takeaway">8 de las 16 regiones no cuentan con ningún centro de radioterapia.</div>
+    <p class="source">Fuente: Listado de Establecimientos de Radioterapia, ISP</p>
+  </div>
+
+  <div class="step-panel" data-step="3">
+    <div class="bar-row"><div class="bar-label" style="color:var(--text-accent);font-weight:500;">Metropolitana</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--light-blue);"></div></div><div class="bar-val" style="color:var(--text-accent);">15</div></div>
+    <div class="bar-row"><div class="bar-label">Biobío</div><div class="bar-track"><div class="bar-fill" style="width:26.7%;background:#d9d9d9;"></div></div><div class="bar-val">4</div></div>
+    <div class="bar-row"><div class="bar-label">Valparaíso</div><div class="bar-track"><div class="bar-fill" style="width:20%;background:#d9d9d9;"></div></div><div class="bar-val">3</div></div>
+    <div class="bar-row"><div class="bar-label">Antofagasta</div><div class="bar-track"><div class="bar-fill" style="width:6.7%;background:#d9d9d9;"></div></div><div class="bar-val">1</div></div>
+    <div class="bar-row"><div class="bar-label">Maule</div><div class="bar-track"><div class="bar-fill" style="width:6.7%;background:#d9d9d9;"></div></div><div class="bar-val">1</div></div>
+    <div class="bar-row"><div class="bar-label">Araucanía</div><div class="bar-track"><div class="bar-fill" style="width:6.7%;background:#d9d9d9;"></div></div><div class="bar-val">1</div></div>
+    <div class="bar-row"><div class="bar-label">Los Ríos</div><div class="bar-track"><div class="bar-fill" style="width:6.7%;background:#d9d9d9;"></div></div><div class="bar-val">1</div></div>
+    <div class="bar-row"><div class="bar-label">Magallanes</div><div class="bar-track"><div class="bar-fill" style="width:6.7%;background:#d9d9d9;"></div></div><div class="bar-val">1</div></div>
+    <p class="caption">Entre las 8 regiones con centros, la oferta tampoco se reparte de forma pareja.</p><div class="takeaway">La Región Metropolitana tiene 15 centros: más que todas las demás regiones juntas.</div>
+    <p class="source">Fuente: Ministerio de Salud; Listado ISP de Establecimientos de Radioterapia</p>
+  </div>
+
+  <div class="step-panel" data-step="4">
+    <div class="final-metric"><div class="num">52%</div><div class="label">de los establecimientos de radioterapia del país están en la Región Metropolitana.</div></div>
+    <div class="final-metric"><div class="num">59%</div><div class="label">de los aceleradores lineales también se concentran allí.</div></div>
+    <div style="margin-bottom:1.75rem;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+        <span style="font-size:13px;color:var(--text-secondary);">Establecimientos en la Región Metropolitana</span>
+        <span style="font-size:24px;font-weight:500;font-family:var(--font-voice);">15<span style="font-size:13px;color:var(--text-secondary);font-family:var(--font-sans);"> de 29</span></span>
+      </div>
+      <div style="background:var(--surface-1);border-radius:6px;height:14px;overflow:hidden;"><div style="width:51.7%;height:100%;background:var(--light-blue);border-radius:6px;"></div></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">52% del total nacional</div>
+    </div>
+    <div style="margin-bottom:0.5rem;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+        <span style="font-size:13px;color:var(--text-secondary);">Aceleradores lineales en la Región Metropolitana</span>
+        <span style="font-size:24px;font-weight:500;font-family:var(--font-voice);">29<span style="font-size:13px;color:var(--text-secondary);font-family:var(--font-sans);"> de 49</span></span>
+      </div>
+      <div style="background:var(--surface-1);border-radius:6px;height:14px;overflow:hidden;"><div style="width:59.2%;height:100%;background:var(--light-blue);border-radius:6px;"></div></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">59% del total nacional</div>
+    </div>
+    <p class="caption">La Región Metropolitana concentra más de la mitad de los establecimientos y de los equipos del país.</p><div class="takeaway">La oferta no solo es desigual entre regiones: también está altamente concentrada en Santiago.</div>
+    <p class="source">Fuente: ISP, Listado de Establecimientos de Radioterapia 2026</p>
+  </div>
+</div>
+
+<div class="navrow">
+  <button class="navbtn" id="prevBtn" onclick="prevStep()">‹ Anterior</button>
+  <button class="navbtn" id="nextBtn" onclick="nextStep()">Siguiente ›</button>
+</div>
+
+<script>
+let currentStep = 1;
+function setStep(n){
+  if(n<1||n>4) return;
+  currentStep = n;
+  document.querySelectorAll('.step-panel').forEach(function(el){
+    el.classList.toggle('active', parseInt(el.dataset.step)===n);
+  });
+  document.querySelectorAll('.slide-tab, .progress-dot').forEach(function(el){
+    const s = parseInt(el.dataset.step);
+    if(s===n){ el.setAttribute('aria-current','step'); }
+    else { el.removeAttribute('aria-current'); }
+  });
+}
+function prevStep(){ setStep(currentStep-1); }
+function nextStep(){ setStep(currentStep+1); }
+setStep(1);
+</script>
+</body>
+</html>

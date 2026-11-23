@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recortes y ejecución en infraestructura de los SLEP</title>
+<style>
+  :root {
+    --ink: #1f1f1d;
+    --ink-2: #52514e;
+    --muted: #807e78;
+    --grid: #e6e5df;
+    --pend: #c3c2b7;
+    --inicial: #888780;
+    --vigente: #2a78d6;
+    --ejecutado: #eb6834;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    background: #fff;
+  }
+  .viz { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; line-height: 1.3; }
+  .sub { font-size: 14px; color: var(--ink-2); margin: 0 0 12px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--ink-2); margin: 0 0 16px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .row { padding: 10px 0; border-top: 1px solid var(--grid); }
+  .row-head { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; margin-bottom: 4px; }
+  .name { font-weight: 600; }
+  .row.pendiente .name { color: var(--muted); font-weight: 500; }
+  .status { color: var(--ink-2); text-align: right; }
+  .row.pendiente .status { color: var(--muted); font-style: italic; }
+  .track { width: 100%; height: 34px; display: block; overflow: visible; }
+  .axis { width: 100%; height: 20px; display: block; overflow: visible; }
+  .lbl { font-size: 11px; fill: var(--muted); }
+  .lbl.strong { fill: var(--ink); font-weight: 600; }
+  .foot { font-size: 12px; color: var(--muted); margin: 14px 0 0; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="viz">
+  <h1>Recortes y ejecución en infraestructura a junio de 2026</h1>
+  <p class="sub">Iniciativas de inversión de los SLEP de la Región Metropolitana, en millones de pesos</p>
+
+  <div class="legend" aria-hidden="true">
+    <span><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="none" stroke="#888780" stroke-width="2"/></svg>Presupuesto inicial</span>
+    <span><svg width="12" height="12"><circle cx="6" cy="6" r="5.5" fill="#2a78d6"/></svg>Presupuesto vigente</span>
+    <span><svg width="12" height="12"><rect x="1" y="1" width="10" height="10" rx="2" fill="#eb6834"/></svg>Ejecutado</span>
+    <span><svg width="22" height="12"><line x1="1" y1="6" x2="21" y2="6" stroke="#c3c2b7" stroke-width="2" stroke-dasharray="3 3"/></svg>Sin datos de montos</span>
+  </div>
+
+  <div id="chart" role="img" aria-label="Presupuesto de infraestructura inicial, vigente y ejecutado por SLEP a junio de 2026."></div>
+
+  <p class="foot">
+    Fuente: ejecución presupuestaria obtenida por Ley de Transparencia. Corte al 30 de junio de 2026:
+    corresponde a la ejecución parcial del año, no al cierre del ejercicio.
+  </p>
+</div>
+
+<script>
+  /* ============================================================
+     DATOS — editar aquí.
+     inicial, vigente, ejecutado: millones de pesos (null si no hay dato)
+     estado: texto que aparece a la derecha del nombre
+     ============================================================ */
+  const DATOS = [
+    { slep: "Santa Corina",     inicial: 952.9, vigente: 291.5, ejecutado: 0,    estado: "0% ejecutado" },
+    { slep: "Los Parques",      inicial: 795,   vigente: 276.1, ejecutado: 0,    estado: "0% ejecutado" },
+    { slep: "Santiago Centro",  inicial: 635.5, vigente: 140,   ejecutado: 0,    estado: "0% ejecutado" },
+    { slep: "Los Libertadores", inicial: null,  vigente: null,  ejecutado: null, estado: "0% ejecutado · faltan montos" },
+    { slep: "Barrancas",        inicial: null,  vigente: null,  ejecutado: null, estado: "2,45% ejecutado · faltan montos" },
+    { slep: "Santa Rosa",       inicial: null,  vigente: null,  ejecutado: null, estado: "Más de 50% · faltan montos" },
+    { slep: "Del Pino",         inicial: null,  vigente: null,  ejecutado: null, estado: "Sin datos" },
+    { slep: "Octavo SLEP",      inicial: null,  vigente: null,  ejecutado: null, estado: "Sin datos" }
+  ];
+  const ESCALA_MAX = 1000;              // tope del eje, en millones
+  const MARCAS = [0, 250, 500, 750, 1000];
+
+  /* ============================================================ */
+  const NS = "http://www.w3.org/2000/svg";
+  const PAD = 4;                         // % de margen a cada lado
+  const pos = v => PAD + (v / ESCALA_MAX) * (100 - 2 * PAD);
+  const fmt = v => v.toLocaleString("es-CL", { maximumFractionDigits: 1 });
+
+  function el(tag, attrs, text) {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+  function grid(svg, h) {
+    MARCAS.forEach(m => svg.appendChild(el("line", {
+      x1: pos(m) + "%", x2: pos(m) + "%", y1: 0, y2: h, stroke: "#e6e5df"
+    })));
+  }
+
+  const chart = document.getElementById("chart");
+  DATOS.forEach(d => {
+    const tiene = d.inicial !== null && d.vigente !== null;
+    const row = document.createElement("div");
+    row.className = "row" + (tiene ? "" : " pendiente");
+
+    const head = document.createElement("div");
+    head.className = "row-head";
+    head.innerHTML = `<span class="name"></span><span class="status"></span>`;
+    head.querySelector(".name").textContent = d.slep;
+    head.querySelector(".status").textContent = d.estado;
+    row.appendChild(head);
+
+    const svg = el("svg", { class: "track" });
+    grid(svg, 34);
+    const y = 22;
+    if (tiene) {
+      const ej = d.ejecutado ?? 0;
+      svg.appendChild(el("line", { x1: pos(d.vigente) + "%", x2: pos(d.inicial) + "%", y1: y, y2: y, stroke: "#c3c2b7", "stroke-width": 2 }));
+      svg.appendChild(el("line", { x1: pos(ej) + "%", x2: pos(d.vigente) + "%", y1: y, y2: y, stroke: "#2a78d6", "stroke-width": 2, opacity: 0.35 }));
+      svg.appendChild(el("circle", { cx: pos(d.inicial) + "%", cy: y, r: 6, fill: "#fff", stroke: "#888780", "stroke-width": 2 }));
+      svg.appendChild(el("circle", { cx: pos(d.vigente) + "%", cy: y, r: 6.5, fill: "#2a78d6" }));
+      const ex = el("svg", { x: pos(ej) + "%", y: y - 5, overflow: "visible" });
+      ex.appendChild(el("rect", { x: -5, y: 0, width: 10, height: 10, rx: 2, fill: "#eb6834" }));
+      svg.appendChild(ex);
+      svg.appendChild(el("text", { x: pos(d.inicial) + "%", y: 9, "text-anchor": "middle", class: "lbl" }, fmt(d.inicial)));
+      svg.appendChild(el("text", { x: pos(d.vigente) + "%", y: 9, "text-anchor": "middle", class: "lbl strong" }, fmt(d.vigente)));
+    } else {
+      svg.appendChild(el("line", { x1: pos(0) + "%", x2: pos(ESCALA_MAX) + "%", y1: y, y2: y, stroke: "#c3c2b7", "stroke-width": 1.5, "stroke-dasharray": "3 4" }));
+    }
+    row.appendChild(svg);
+    chart.appendChild(row);
+  });
+
+  const axis = el("svg", { class: "axis" });
+  MARCAS.forEach(m => axis.appendChild(el("text", {
+    x: pos(m) + "%", y: 14, "text-anchor": "middle", class: "lbl"
+  }, "$" + m.toLocaleString("es-CL"))));
+  chart.appendChild(axis);
+
+  /* Avisa su altura a WordPress para que el iframe se ajuste solo */
+  function enviarAltura() {
+    window.parent.postMessage({ slepVizAltura: document.documentElement.scrollHeight }, "*");
+  }
+  window.addEventListener("load", enviarAltura);
+  window.addEventListener("resize", enviarAltura);
+</script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Una ausencia, seis cursos</title>
+<style>
+  :root {
+    --ink: #1f1f1d;
+    --ink-2: #52514e;
+    --muted: #807e78;
+    --line: #e6e5df;
+    --card: #f7f6f2;
+    --off: #d9d8d1;
+    --on: #eb6834;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    background: #fff;
+  }
+  .viz { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; line-height: 1.3; }
+  .sub { font-size: 14px; color: var(--ink-2); margin: 0 0 18px; line-height: 1.5; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+  @media (max-width: 520px) {
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  .curso {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .curso-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .curso-nombre { font-size: 14px; font-weight: 600; }
+  .curso-n { font-size: 12px; color: var(--muted); }
+  .dots {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 5px;
+  }
+  .dot {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--off);
+    transition: background-color .25s ease;
+  }
+  .curso.on .dot { background: var(--on); }
+  .total {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 22px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  .total-n {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 56px;
+    line-height: 1;
+    color: var(--on);
+    font-variant-numeric: tabular-nums lining-nums;
+    min-width: 3ch;
+  }
+  .total-txt { font-size: 16px; color: var(--ink-2); }
+  .foot { font-size: 12px; color: var(--muted); margin: 14px 0 0; line-height: 1.5; }
+  .dias { margin: 26px 0 0; padding-top: 16px; border-top: 1px solid var(--line); }
+  .dias h2 { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .dias .sub { margin-bottom: 14px; }
+  .franja { display: flex; gap: 4px; }
+  .dia {
+    flex: 1; min-width: 0; height: 34px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-variant-numeric: tabular-nums;
+  }
+  .dia.sin { background: var(--off); color: var(--ink-2); }
+  .dia.con { background: #e1f5ee; color: #085041; border: 1.5px dashed #1d9e75; }
+  .tramos { display: flex; gap: 4px; margin-top: 8px; }
+  .tramo { font-size: 13px; line-height: 1.4; padding-top: 6px; border-top: 2px solid; }
+  .tramo.sin { flex: 7; border-color: #888780; color: var(--ink-2); }
+  .tramo.con { flex: 7; border-color: #1d9e75; color: #0f6e56; }
+  .tramo strong { display: block; font-weight: 600; color: var(--ink); }
+  .tramo.con strong { color: #085041; }
+  @media (max-width: 520px) { .dia span.mid { display: none; } }
+  button {
+    margin-top: 12px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--ink-2);
+    background: #fff;
+    border: 1px solid var(--off);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="viz">
+  <h1>Una ausencia, seis cursos</h1>
+  <p class="sub">Un profesor de asignatura puede hacer clases a seis cursos de unos 40 estudiantes cada uno. Si falta, la ausencia se siente en todos ellos.</p>
+
+  <div class="grid" id="grid" role="img" aria-label="Seis cursos de 40 estudiantes cada uno: una sola ausencia docente afecta a 240 estudiantes."></div>
+
+  <div class="total">
+    <span class="total-n" id="total">240</span>
+    <span class="total-txt">estudiantes potencialmente afectados</span>
+  </div>
+
+  <button id="replay" type="button">Ver de nuevo</button>
+
+  <div class="dias">
+    <h2>¿Y quién les hace clases?</h2>
+    <p class="sub">Depende de cuántos días dure la licencia.</p>
+    <div class="franja" id="franja" role="img" aria-label="Del día 1 al 7 de licencia no hay reemplazo y cubren colegas; desde el día 8 el SLEP puede contratar un reemplazo si tiene presupuesto."></div>
+    <div class="tramos">
+      <div class="tramo sin"><strong>Días 1 a 7: sin reemplazo</strong>Los cubren colegas que dejan sus horas de colaboración, a veces en una asignatura que no enseñan.</div>
+      <div class="tramo con"><strong>Desde el día 8: reemplazo posible</strong>El SLEP puede contratar a alguien, si tiene presupuesto y encuentra un profesor disponible.</div>
+    </div>
+    <p class="foot">Si la licencia se renueva por pocos días cada vez, la ausencia puede alargarse durante semanas sin que llegue un reemplazante.</p>
+  </div>
+
+  <p class="foot">Escenario ilustrativo basado en el ejemplo del Instituto Nacional citado en el reportaje, no un registro de una ausencia específica. Regla de los siete días corridos: Ley 21.819 (2026).</p>
+</div>
+
+<script>
+  const CURSOS = 6;
+  const ALUMNOS = 40;
+
+  const grid = document.getElementById("grid");
+  const total = document.getElementById("total");
+  const cards = [];
+
+  for (let c = 1; c <= CURSOS; c++) {
+    const card = document.createElement("div");
+    card.className = "curso on";
+    card.innerHTML =
+      `<div class="curso-head"><span class="curso-nombre">Curso ${c}</span><span class="curso-n">${ALUMNOS} alumnos</span></div>` +
+      `<div class="dots">${'<span class="dot"></span>'.repeat(ALUMNOS)}</div>`;
+    grid.appendChild(card);
+    cards.push(card);
+  }
+
+  const franja = document.getElementById("franja");
+  for (let d = 1; d <= 14; d++) {
+    const el = document.createElement("div");
+    el.className = "dia " + (d <= 7 ? "sin" : "con");
+    const visible = d === 1 || d === 7 || d === 8 || d === 14;
+    el.innerHTML = `<span class="${visible ? "" : "mid"}">${d}</span>`;
+    franja.appendChild(el);
+  }
+
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let timers = [];
+
+  function contar(desde, hasta, ms) {
+    const t0 = performance.now();
+    function paso(t) {
+      const p = Math.min(1, (t - t0) / ms);
+      total.textContent = Math.round(desde + (hasta - desde) * p);
+      if (p < 1) requestAnimationFrame(paso);
+    }
+    requestAnimationFrame(paso);
+  }
+
+  function animar() {
+    if (reduce) return;
+    timers.forEach(clearTimeout);
+    timers = [];
+    cards.forEach(c => c.classList.remove("on"));
+    total.textContent = "0";
+    cards.forEach((card, i) => {
+      timers.push(setTimeout(() => {
+        card.classList.add("on");
+        contar(i * ALUMNOS, (i + 1) * ALUMNOS, 450);
+      }, 400 + i * 600));
+    });
+  }
+
+  if (!reduce && "IntersectionObserver" in window) {
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) { animar(); obs.disconnect(); }
+    }, { threshold: 0.4 });
+    obs.observe(grid);
+  }
+  document.getElementById("replay").addEventListener("click", animar);
+
+  function enviarAltura() {
+    window.parent.postMessage({ slepAusenciaAltura: document.documentElement.scrollHeight }, "*");
+  }
+  window.addEventListener("load", enviarAltura);
+  window.addEventListener("resize", enviarAltura);
+</script>
+</body>
+</html>
